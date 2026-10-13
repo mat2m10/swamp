@@ -1,0 +1,4 @@
+2 # number of node in the bottleneck, best stay at 2
+0.01 # drop rate to avoid overfitting
+elu # activation function
+2 # the depth of the model
