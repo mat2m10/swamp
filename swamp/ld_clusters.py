@@ -10,23 +10,29 @@ def ld_groups_pca(genos, sample_size = 1000):
     from collections import Counter
     import numpy as np
     import pandas as pd
-    import tensorflow as tf
     
     genos = genos.T
-    len_test = round(genos.shape[0]/10)*3
-    len_train = genos.shape[0] - len_test
-    X_train = genos.head(len_train)
-    X_train = tf.convert_to_tensor(X_train, dtype=tf.float32)
-    X_test = genos.tail(len_test)
-    X_test = tf.convert_to_tensor(X_test, dtype=tf.float32)
-    X = tf.convert_to_tensor(genos, dtype=tf.float32)
+    # Only the float32 matrix is needed here (the train/test split is not used
+    # by the PCA path, so it is not materialised).
+    X = genos.to_numpy(dtype=np.float32)
     
     """
     do PCA
     """
+    # Only the first two components are used. Solving the PCA through the
+    # eigendecomposition of the (n_individuals x n_individuals) covariance
+    # gives the same two components as the full SVD that PCA() ran before
+    # (equal up to float32 round-off, same sign convention), but avoids a full
+    # SVD of the (n_snps x n_individuals) matrix and the projection on all
+    # components, which dominated the run time for large cohorts.
     from sklearn.decomposition import PCA
-    pca = PCA()
-    pca.fit(X)
+    try:
+        pca = PCA(n_components=2, svd_solver='covariance_eigh')
+        pca.fit(X)
+    except ValueError:
+        # scikit-learn < 1.5 has no 'covariance_eigh' solver: previous behaviour
+        pca = PCA()
+        pca.fit(X)
     pca_data = pca.transform(X)
     LDs = pd.DataFrame(index = genos.index, data=pca_data[:,:2].astype('float32'), columns=['dim1', 'dim2'])
     
@@ -57,7 +63,7 @@ def ld_groups_pca(genos, sample_size = 1000):
         multi = floor(val/sample_size)+1
         list_to_sample = multi*list(range(sample_size))
         random.shuffle(list_to_sample)
-        empty = empty + list_to_sample[0:val]
+        empty.extend(list_to_sample[0:val])
     genos['ordering_shuffled'] = empty
     return genos, LDs
     
@@ -129,6 +135,6 @@ def ld_groups_ae(genos, sample_size = 1000, depth = 2, epoch = 5):
         multi = floor(val/sample_size)+1
         list_to_sample = multi*list(range(sample_size))
         random.shuffle(list_to_sample)
-        empty = empty + list_to_sample[0:val]
+        empty.extend(list_to_sample[0:val])
     genos['ordering_shuffled'] = empty
     return genos, LDs

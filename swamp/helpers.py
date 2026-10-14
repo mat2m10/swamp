@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from keras.layers import Activation, BatchNormalization, Dense, Dropout
 
 def count_AF(total):
     import pandas as pd
@@ -43,6 +42,10 @@ def bitify(num):
 Create little bloks of neural nets
 """    
 def create_blok(x, units, drop_rate=0.05, activation = 'elu'):
+    # Imported here rather than at module level so that the scripts which only
+    # need the data/plot helpers (01, 02 with PCA, 09) do not pay the several
+    # seconds it takes to import TensorFlow/Keras.
+    from keras.layers import Activation, BatchNormalization, Dense, Dropout
     x = Dense(units)(x)
     x = Dropout(drop_rate)(x)
     x = Activation(activation)(x)
