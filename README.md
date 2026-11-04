@@ -38,3 +38,7 @@ Hyperparameter grids are in `hyper_params_to_test_*.txt`. `testing_swamp.ipynb` 
 ## Status
 
 Research code, shared as is. Author: Matthieu de Hemptinne.
+
+## License
+
+GPL-3.0, see [LICENSE](LICENSE).
